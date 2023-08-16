@@ -118,7 +118,7 @@ def run_net(args, config, train_writer=None, val_writer=None):
             data_time.update(time.time() - batch_start_time)
             npoints = config.dataset.train.others.npoints
             dataset_name = config.dataset.train._base_.NAME
-            if dataset_name == 'ShapeNet' or dataset_name == 'MVPNet':
+            if dataset_name == 'ShapeNet' or dataset_name == 'MVPNet' or dataset_name == 'ModelNetPretrain':
                 points = data.cuda()
             elif dataset_name == 'ModelNet':
                 points = data[0].cuda()
@@ -179,14 +179,14 @@ def run_net(args, config, train_writer=None, val_writer=None):
             (epoch,  epoch_end_time - epoch_start_time, ['%.4f' % l for l in losses.avg()],
              optimizer.param_groups[0]['lr']), logger = logger)
 
-        # if epoch % args.val_freq == 0 and epoch != 0:
-        #     # Validate the current model
-        #     metrics = validate(base_model, extra_train_dataloader, test_dataloader, epoch, val_writer, args, config, logger=logger)
-        #
-        #     # Save ckeckpoints
-        #     if metrics.better_than(best_metrics):
-        #         best_metrics = metrics
-        #         builder.save_checkpoint(base_model, optimizer, epoch, metrics, best_metrics, 'ckpt-best', args, logger = logger)
+        if epoch % args.val_freq == 0 and epoch != 0 and extra_train_dataloader is not None:
+            # Validate the current model
+            metrics = validate(base_model, extra_train_dataloader, test_dataloader, epoch, val_writer, args, config, logger=logger)
+        
+            # Save ckeckpoints
+            if metrics.better_than(best_metrics):
+                best_metrics = metrics
+                builder.save_checkpoint(base_model, optimizer, epoch, metrics, best_metrics, 'ckpt-best', args, logger = logger)
         builder.save_checkpoint(base_model, optimizer, epoch, metrics, best_metrics, 'ckpt-last', args, logger = logger)
         if epoch % 25 ==0 and epoch >=250:
             builder.save_checkpoint(base_model, optimizer, epoch, metrics, best_metrics, f'ckpt-epoch-{epoch:03d}', args,

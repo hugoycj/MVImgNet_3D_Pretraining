@@ -6,18 +6,18 @@ dataset:
   {
     train:
       {
-        _base_: cfgs/dataset_configs/ScanObjectNN_hardest.yaml,
-        others: { subset: "train", use_aug: False, pre_aug: False},
+        _base_: cfgs/dataset_configs/ScanObjectNN_objectbg.yaml,
+        others: { subset: "train", use_aug: True, pre_aug: True},
       },
     val:
       {
-        _base_: cfgs/dataset_configs/ScanObjectNN_hardest.yaml,
-        others: { subset: "test", use_aug: False, pre_aug: False},
+        _base_: cfgs/dataset_configs/ScanObjectNN_objectbg.yaml,
+        others: { subset: "test", use_aug: True, pre_aug: True},
       },
     test:
       {
-        _base_: cfgs/dataset_configs/ScanObjectNN_hardest.yaml,
-        others: { subset: "test", use_aug: False, pre_aug: False},
+        _base_: cfgs/dataset_configs/ScanObjectNN_objectbg.yaml,
+        others: { subset: "test", use_aug: False, pre_aug: True},
       },
   }
 model:

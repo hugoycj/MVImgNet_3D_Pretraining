@@ -5,12 +5,12 @@ from utils import misc, dist_utils
 import time
 from utils.logger import *
 from utils.AverageMeter import AverageMeter
-
+from torchmetrics import Accuracy
 import numpy as np
 from datasets import data_transforms
 from pointnet2_ops import pointnet2_utils
 from torchvision import transforms
-
+from tqdm import tqdm
 
 train_transforms = transforms.Compose(
     [
@@ -226,15 +226,37 @@ def run_net(args, config, train_writer=None, val_writer=None):
     if val_writer is not None:
         val_writer.close()
 
+def validate_run_net(args, config):
+    # build dataset
+    _, test_dataloader = builder.dataset_builder(args, config.dataset.val)
+    # build model
+    base_model = builder.model_builder(config.model)
+    
+    # resume ckpts
+    if args.ckpts is not None:
+        base_model.load_model_from_ckpt(args.ckpts)
+    else:
+        print("Do not detect ckpts")
+        exit()
+
+    if args.use_gpu:    
+        base_model.to(args.local_rank)
+
+    # trainval
+    base_model.eval()
+    metrics = validate(base_model, test_dataloader, 0, None, args, config)
+
 def validate(base_model, test_dataloader, epoch, val_writer, args, config, logger = None):
     # print_log(f"[VALIDATION] Start validating epoch {epoch}", logger = logger)
     base_model.eval()  # set model to eval mode
+    overall_acc_metric = Accuracy().cuda()
+    average_acc_metric = Accuracy(num_classes=15, average='macro').cuda()
 
     test_pred  = []
     test_label = []
     npoints = config.npoints
     with torch.no_grad():
-        for idx, (taxonomy_ids, model_ids, data) in enumerate(test_dataloader):
+        for idx, (taxonomy_ids, model_ids, data) in tqdm(enumerate(test_dataloader)):
             points = data[0].cuda()
             label = data[1].cuda()
 
@@ -242,7 +264,6 @@ def validate(base_model, test_dataloader, epoch, val_writer, args, config, logge
 
             logits = base_model(points)
             target = label.view(-1)
-
             pred = logits.argmax(-1).view(-1)
 
             test_pred.append(pred.detach())
@@ -255,8 +276,11 @@ def validate(base_model, test_dataloader, epoch, val_writer, args, config, logge
             test_pred = dist_utils.gather_tensor(test_pred, args)
             test_label = dist_utils.gather_tensor(test_label, args)
 
+        overall_acc = overall_acc_metric(test_pred, test_label) * 100
+        average_acc = average_acc_metric(test_pred, test_label) * 100
+
         acc = (test_pred == test_label).sum() / float(test_label.size(0)) * 100.
-        print_log('[Validation] EPOCH: %d  acc = %.4f' % (epoch, acc), logger=logger)
+        print_log('[Validation] EPOCH: %d  overall_acc = %.4f, average_acc = %.4f' % (epoch, acc, average_acc), logger=logger)
 
         if args.distributed:
             torch.cuda.synchronize()
