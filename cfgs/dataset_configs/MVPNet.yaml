@@ -1,0 +1,4 @@
+NAME: MVPNet
+DATA_PATH: data/MVPNet
+N_POINTS: 2048
+USE_COLOR: False

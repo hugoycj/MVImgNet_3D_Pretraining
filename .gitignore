@@ -7,3 +7,6 @@ best/
 dist/
 build/
 *.egg-info/
+
+experiments
+*.pyc
