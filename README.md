@@ -33,7 +33,7 @@ pip install --upgrade https://github.com/unlimblue/KNN_CUDA/releases/download/0.
 
 ## Datasets
 
-We provide the preprocessed [MVPNet](link_to_MVPNet_dataset) dataset. You can download it and extract the contents to the `data` folder in your project directory.
+We provide the preprocessed [MVPNet](https://cuhko365-my.sharepoint.com/:u:/g/personal/118010378_link_cuhk_edu_cn/EUeeZnpniUdDmuRQEMKBq_kBlqKK8aW_RAInrf1_bGkKCw?e=oVPhUz) dataset. You can download it and extract the contents to the `data` folder in your project directory.
 
 ## Instructions
 * Pre-training: ``CUDA_VISIBLE_DEVICES=<GPU> python main.py --config cfgs/pretrain_MVPNet.yaml --exp_name <output_file_name>``
